@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
@@ -34,7 +37,10 @@ fun HomeScreen(
     currentUser: User,
     onRoleSelected: (UserRole) -> Unit,
     onNavigateToSimulator: () -> Unit,
-    onNavigateToCatalog: () -> Unit
+    onNavigateToCatalog: () -> Unit,
+    onNavigateToRegisterHorse: () -> Unit,
+    onNavigateToVetSamples: () -> Unit,
+    onNavigateToAdminDashboard: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -154,6 +160,91 @@ fun HomeScreen(
                         text = "Explora reproductores de otros criadores",
                         style = MaterialTheme.typography.bodySmall
                     )
+                }
+            }
+
+            // Acciones habilitadas según el perfil activo
+            if (currentUser.role.canRegisterHorses) {
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = onNavigateToRegisterHorse,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(72.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Registrar caballo",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Alta en mi criadero",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+
+            if (currentUser.role.canRegisterSamples) {
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = onNavigateToVetSamples,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(72.dp)
+                ) {
+                    Icon(
+                        Icons.Default.DateRange,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Muestras y análisis",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Extracciones y semáforo veterinario",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+
+            if (currentUser.role.canSeeGlobalData) {
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = onNavigateToAdminDashboard,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(72.dp)
+                ) {
+                    Icon(
+                        Icons.Default.AccountCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Panel global",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Usuarios, criaderos y caballos",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
         }

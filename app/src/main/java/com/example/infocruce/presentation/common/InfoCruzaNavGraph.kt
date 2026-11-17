@@ -10,13 +10,19 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.infocruce.InfoCruzaApplication
+import com.example.infocruce.presentation.admin.AdminDashboardScreen
 import com.example.infocruce.presentation.catalog.CatalogScreen
+import com.example.infocruce.presentation.owner.RegisterHorseScreen
 import com.example.infocruce.presentation.simulator.CrossSimulatorScreen
+import com.example.infocruce.presentation.vet.VetSamplesScreen
 
 object Routes {
     const val HOME = "home"
     const val SIMULATOR = "simulator"
     const val CATALOG = "catalog"
+    const val REGISTER_HORSE = "registerHorse"
+    const val VET_SAMPLES = "vetSamples"
+    const val ADMIN_DASHBOARD = "adminDashboard"
 
     /** Argumento de navegación con el caballo elegido en el catálogo. */
     const val ARG_HORSE_ID = "horseId"
@@ -45,7 +51,10 @@ fun InfoCruzaNavGraph(navController: NavHostController) {
                 currentUser = currentUser,
                 onRoleSelected = session::selectRole,
                 onNavigateToSimulator = { navController.navigate(Routes.simulator()) },
-                onNavigateToCatalog = { navController.navigate(Routes.CATALOG) }
+                onNavigateToCatalog = { navController.navigate(Routes.CATALOG) },
+                onNavigateToRegisterHorse = { navController.navigate(Routes.REGISTER_HORSE) },
+                onNavigateToVetSamples = { navController.navigate(Routes.VET_SAMPLES) },
+                onNavigateToAdminDashboard = { navController.navigate(Routes.ADMIN_DASHBOARD) }
             )
         }
         composable(
@@ -69,6 +78,27 @@ fun InfoCruzaNavGraph(navController: NavHostController) {
             CatalogScreen(
                 onBackClick = { navController.popBackStack() },
                 onEvaluateClick = { horseId -> navController.navigate(Routes.simulator(horseId)) },
+                repository = repository,
+                session = session
+            )
+        }
+        composable(Routes.REGISTER_HORSE) {
+            RegisterHorseScreen(
+                onBackClick = { navController.popBackStack() },
+                repository = repository,
+                session = session
+            )
+        }
+        composable(Routes.VET_SAMPLES) {
+            VetSamplesScreen(
+                onBackClick = { navController.popBackStack() },
+                repository = repository,
+                session = session
+            )
+        }
+        composable(Routes.ADMIN_DASHBOARD) {
+            AdminDashboardScreen(
+                onBackClick = { navController.popBackStack() },
                 repository = repository,
                 session = session
             )

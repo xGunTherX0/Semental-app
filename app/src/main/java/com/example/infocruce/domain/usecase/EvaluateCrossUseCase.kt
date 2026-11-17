@@ -1,21 +1,23 @@
 package com.example.infocruce.domain.usecase
 
-import com.example.infocruce.data.repository.InMemoryHorseRepository
+import com.example.infocruce.data.repository.HorseRepository
 import com.example.infocruce.domain.model.*
+import java.util.Locale
 
 class EvaluateCrossUseCase(
-    private val repository: InMemoryHorseRepository
+    private val repository: HorseRepository
 ) {
 
     operator fun invoke(sireId: Long, damId: Long): CrossSimulationResult {
-        val sire = repository.getHorseById(sireId)
-            ?: throw IllegalArgumentException("El macho con ID $sireId no existe")
-        val dam = repository.getHorseById(damId)
-            ?: throw IllegalArgumentException("La hembra con ID $damId no existe")
-
-        require(sire.sex == HorseSex.MACHO) { "${sire.name} no es un macho" }
-        require(dam.sex == HorseSex.HEMBRA) { "${dam.name} no es una hembra" }
         require(sireId != damId) { "No se puede evaluar un caballo consigo mismo" }
+
+        val sire = repository.getHorseById(sireId)
+            ?: throw IllegalArgumentException("El macho con ID $sireId no existe en el catálogo")
+        val dam = repository.getHorseById(damId)
+            ?: throw IllegalArgumentException("La hembra con ID $damId no existe en el catálogo")
+
+        require(sire.sex == HorseSex.MACHO) { "${sire.name} no es un macho (semental)" }
+        require(dam.sex == HorseSex.HEMBRA) { "${dam.name} no es una hembra (yegua)" }
 
         val sireAncestors = getAncestors(sire)
         val damAncestors = getAncestors(dam)
@@ -32,7 +34,7 @@ class EvaluateCrossUseCase(
             observations.add("${shared.size} ancestro(s) común(es) encontrado(s)")
         }
         if (coi >= 5.0) {
-            observations.add("COI del ${String.format("%.1f", coi)}% — parentesco ${if (coi >= 10.0) "alto" else "moderado"}")
+            observations.add("COI del ${format(coi)}% — parentesco ${if (coi >= 10.0) "alto" else "moderado"}")
         }
         observations.addAll(healthRisks)
         if (sireHealth.isEmpty()) observations.add("Sin registros sanitarios para ${sire.name}")
@@ -91,4 +93,6 @@ class EvaluateCrossUseCase(
         }
         return risks
     }
+
+    private fun format(value: Double): String = String.format(Locale.US, "%.1f", value)
 }

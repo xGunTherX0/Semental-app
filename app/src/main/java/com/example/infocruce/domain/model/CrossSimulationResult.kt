@@ -1,15 +1,6 @@
 package com.example.infocruce.domain.model
 
 /**
- * Enumeración del estado del semáforo de compatibilidad genética.
- */
-enum class TrafficLightStatus {
-    VERDE,
-    AMARILLO,
-    ROJO
-}
-
-/**
  * Modelo de dominio que representa el resultado de una simulación de cruce.
  *
  * @param sireId ID del macho (semental) evaluado

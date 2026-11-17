@@ -22,7 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.infocruce.data.repository.InMemoryHorseRepository
+import com.example.infocruce.data.repository.HorseRepository
+import com.example.infocruce.data.session.AppSession
 import com.example.infocruce.domain.model.CrossSimulationResult
 import com.example.infocruce.domain.model.Horse
 import com.example.infocruce.domain.model.TrafficLightStatus
@@ -37,8 +38,9 @@ object TrafficLightColors {
 @Composable
 fun CrossSimulatorScreen(
     onBackClick: () -> Unit,
-    repository: InMemoryHorseRepository,
-    viewModel: CrossSimulatorViewModel = viewModel(factory = CrossSimulatorViewModel.Factory(repository))
+    repository: HorseRepository,
+    session: AppSession,
+    viewModel: CrossSimulatorViewModel = viewModel(factory = CrossSimulatorViewModel.Factory(repository, session))
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }

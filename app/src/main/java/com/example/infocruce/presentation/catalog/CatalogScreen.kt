@@ -20,9 +20,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.infocruce.data.repository.InMemoryHorseRepository
+import com.example.infocruce.data.repository.HorseRepository
+import com.example.infocruce.data.session.AppSession
 import com.example.infocruce.domain.model.Horse
 import com.example.infocruce.domain.model.HorseSex
+import com.example.infocruce.domain.model.UserRole
 import com.example.infocruce.presentation.simulator.TrafficLightColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,15 +32,16 @@ import com.example.infocruce.presentation.simulator.TrafficLightColors
 fun CatalogScreen(
     onBackClick: () -> Unit,
     onEvaluateClick: (Long) -> Unit,
-    repository: InMemoryHorseRepository,
-    viewModel: CatalogViewModel = viewModel(factory = CatalogViewModel.Factory(repository))
+    repository: HorseRepository,
+    session: AppSession,
+    viewModel: CatalogViewModel = viewModel(factory = CatalogViewModel.Factory(repository, session))
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Catálogo Público") },
+                title = { Text(if (uiState.role == UserRole.OWNER) "Catálogo Público" else "Todos los caballos") },
                 navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.Default.ArrowBack, "Volver") } },
                 actions = { IconButton(onClick = { }) { Icon(Icons.Default.Refresh, "Actualizar") } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary, titleContentColor = MaterialTheme.colorScheme.onPrimary)

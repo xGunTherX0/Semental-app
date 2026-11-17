@@ -3,7 +3,8 @@ package com.example.infocruce.presentation.simulator
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.infocruce.data.repository.InMemoryHorseRepository
+import com.example.infocruce.data.repository.HorseRepository
+import com.example.infocruce.data.session.AppSession
 import com.example.infocruce.domain.model.*
 import com.example.infocruce.domain.usecase.EvaluateCrossUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,23 +20,37 @@ data class SimulatorUiState(
     val selectedDam: Horse? = null,
     val isLoading: Boolean = false,
     val result: CrossSimulationResult? = null,
-    val error: String? = null
+    val error: String? = null,
+    val role: UserRole = UserRole.OWNER
 )
 
 class CrossSimulatorViewModel(
-    private val repository: InMemoryHorseRepository,
+    private val repository: HorseRepository,
+    private val session: AppSession,
     private val evaluateCrossUseCase: EvaluateCrossUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SimulatorUiState())
     val uiState: StateFlow<SimulatorUiState> = _uiState.asStateFlow()
 
-    init { loadHorses() }
+    init {
+        viewModelScope.launch {
+            session.currentUser.collect { user ->
+                _uiState.update { it.copy(role = user.role) }
+                loadHorses()
+            }
+        }
+    }
 
     private fun loadHorses() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val my = repository.getMyHorses(1L)
+            val user = session.currentUser.value
+            // El dueño trabaja con su criadero; admin y veterinario ven todos los caballos.
+            val my = when (user.role) {
+                UserRole.OWNER -> repository.getMyHorses(user.id)
+                UserRole.ADMIN, UserRole.VET -> repository.getAllHorses()
+            }
             val pub = repository.getPublicCatalog()
             _uiState.update { it.copy(myHorses = my, publicHorses = pub, isLoading = false) }
         }
@@ -58,7 +73,12 @@ class CrossSimulatorViewModel(
                 repository.saveSimulationResult(result)
                 _uiState.update { it.copy(isLoading = false, result = result) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, error = e.message) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "No se pudo completar la evaluación del cruce"
+                    )
+                }
             }
         }
     }
@@ -67,13 +87,16 @@ class CrossSimulatorViewModel(
     fun clearError() { _uiState.update { it.copy(error = null) } }
     fun getMyMales(): List<Horse> = _uiState.value.myHorses.filter { it.sex == HorseSex.MACHO }
     fun getAvailableFemales(): List<Horse> =
-        _uiState.value.myHorses.filter { it.sex == HorseSex.HEMBRA } +
-        _uiState.value.publicHorses.filter { it.sex == HorseSex.HEMBRA }
+        (_uiState.value.myHorses.filter { it.sex == HorseSex.HEMBRA } +
+            _uiState.value.publicHorses.filter { it.sex == HorseSex.HEMBRA }).distinctBy { it.id }
 
-    class Factory(private val repository: InMemoryHorseRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repository: HorseRepository,
+        private val session: AppSession
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CrossSimulatorViewModel(repository, EvaluateCrossUseCase(repository)) as T
+            return CrossSimulatorViewModel(repository, session, EvaluateCrossUseCase(repository)) as T
         }
     }
 }

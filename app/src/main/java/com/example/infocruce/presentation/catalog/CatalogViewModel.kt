@@ -3,9 +3,11 @@ package com.example.infocruce.presentation.catalog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.infocruce.data.repository.InMemoryHorseRepository
+import com.example.infocruce.data.repository.HorseRepository
+import com.example.infocruce.data.session.AppSession
 import com.example.infocruce.domain.model.Horse
 import com.example.infocruce.domain.model.HorseSex
+import com.example.infocruce.domain.model.UserRole
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,23 +19,46 @@ data class CatalogUiState(
     val filteredHorses: List<Horse> = emptyList(),
     val isLoading: Boolean = false,
     val selectedFilter: HorseSex? = null,
+    val role: UserRole = UserRole.OWNER,
     val error: String? = null
 )
 
 class CatalogViewModel(
-    private val repository: InMemoryHorseRepository
+    private val repository: HorseRepository,
+    private val session: AppSession
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CatalogUiState())
     val uiState: StateFlow<CatalogUiState> = _uiState.asStateFlow()
 
-    init { loadCatalog() }
+    init {
+        viewModelScope.launch {
+            session.currentUser.collect { user ->
+                _uiState.update { it.copy(role = user.role) }
+                loadCatalog()
+            }
+        }
+    }
 
     private fun loadCatalog() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val horses = repository.getPublicCatalog()
-            _uiState.update { it.copy(horses = horses, filteredHorses = horses, isLoading = false) }
+            val role = session.currentUser.value.role
+            // El dueño explora reproductores ajenos; el admin y el veterinario
+            // necesitan visibilidad global de todos los caballos del sistema.
+            val horses = if (role == UserRole.OWNER) {
+                repository.getPublicCatalog()
+            } else {
+                repository.getAllHorses()
+            }
+            _uiState.update { state ->
+                val filtered = if (state.selectedFilter == null) {
+                    horses
+                } else {
+                    horses.filter { it.sex == state.selectedFilter }
+                }
+                state.copy(horses = horses, filteredHorses = filtered, isLoading = false)
+            }
         }
     }
 
@@ -46,10 +71,13 @@ class CatalogViewModel(
 
     fun clearError() { _uiState.update { it.copy(error = null) } }
 
-    class Factory(private val repository: InMemoryHorseRepository) : ViewModelProvider.Factory {
+    class Factory(
+        private val repository: HorseRepository,
+        private val session: AppSession
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CatalogViewModel(repository) as T
+            return CatalogViewModel(repository, session) as T
         }
     }
 }

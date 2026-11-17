@@ -27,7 +27,8 @@ data class SimulatorUiState(
 class CrossSimulatorViewModel(
     private val repository: HorseRepository,
     private val session: AppSession,
-    private val evaluateCrossUseCase: EvaluateCrossUseCase
+    private val evaluateCrossUseCase: EvaluateCrossUseCase,
+    private val preselectedHorseId: Long = -1L
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SimulatorUiState())
@@ -39,6 +40,20 @@ class CrossSimulatorViewModel(
                 _uiState.update { it.copy(role = user.role) }
                 loadHorses()
             }
+        }
+        preselectHorse(preselectedHorseId)
+    }
+
+    /**
+     * Preselecciona el caballo que llega desde el catálogo: si es macho ocupa
+     * el slot de sire y si es hembra el de dam.
+     */
+    private fun preselectHorse(id: Long) {
+        if (id <= 0L) return
+        val horse = repository.getHorseById(id) ?: return
+        when (horse.sex) {
+            HorseSex.MACHO -> _uiState.update { it.copy(selectedSire = horse, result = null) }
+            HorseSex.HEMBRA -> _uiState.update { it.copy(selectedDam = horse, result = null) }
         }
     }
 
@@ -92,11 +107,17 @@ class CrossSimulatorViewModel(
 
     class Factory(
         private val repository: HorseRepository,
-        private val session: AppSession
+        private val session: AppSession,
+        private val preselectedHorseId: Long = -1L
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return CrossSimulatorViewModel(repository, session, EvaluateCrossUseCase(repository)) as T
+            return CrossSimulatorViewModel(
+                repository = repository,
+                session = session,
+                evaluateCrossUseCase = EvaluateCrossUseCase(repository),
+                preselectedHorseId = preselectedHorseId
+            ) as T
         }
     }
 }

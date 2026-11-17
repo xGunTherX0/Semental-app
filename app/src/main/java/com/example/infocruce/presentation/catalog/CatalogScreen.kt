@@ -97,7 +97,7 @@ fun HorseCatalogCard(horse: Horse, onEvaluateClick: () -> Unit) {
             }
             Spacer(Modifier.height(12.dp))
             Button(onClick = onEvaluateClick, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) {
-                Text("Evaluar con una de mis yeguas")
+                Text(if (horse.sex == HorseSex.MACHO) "Usar como macho (sire)" else "Usar como hembra (dam)")
             }
         }
     }

@@ -40,7 +40,11 @@ fun CrossSimulatorScreen(
     onBackClick: () -> Unit,
     repository: HorseRepository,
     session: AppSession,
-    viewModel: CrossSimulatorViewModel = viewModel(factory = CrossSimulatorViewModel.Factory(repository, session))
+    preselectedHorseId: Long = -1L,
+    viewModel: CrossSimulatorViewModel = viewModel(
+        key = "simulator-$preselectedHorseId",
+        factory = CrossSimulatorViewModel.Factory(repository, session, preselectedHorseId)
+    )
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
